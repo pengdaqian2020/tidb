@@ -140,6 +140,9 @@ func checkIndexColumn(col *model.ColumnInfo, indexColumnLen int) error {
 		if indexColumnLen == types.ErrorLength {
 			return errors.Trace(errKeyPart0.GenWithStackByArgs(col.Name.O))
 		}
+		if indexColumnLen*4 > config.GetGlobalConfig().MaxIndexLength {
+			return errTooLongKey.GenWithStackByArgs(config.GetGlobalConfig().MaxIndexLength)
+		}
 	}
 
 	// Length can only be specified for specifiable types.
@@ -186,7 +189,7 @@ func getIndexColumnLength(col *model.ColumnInfo, colLen int) (int, error) {
 		}
 		return desc.Maxlen * length, nil
 	case mysql.TypeTinyBlob, mysql.TypeMediumBlob, mysql.TypeBlob, mysql.TypeLongBlob:
-		return length, nil
+		return calcBytesLengthForBlob(length), nil
 	case mysql.TypeTiny, mysql.TypeInt24, mysql.TypeLong, mysql.TypeLonglong, mysql.TypeDouble, mysql.TypeShort:
 		return mysql.DefaultLengthOfMysqlTypes[col.Tp], nil
 	case mysql.TypeFloat:
@@ -206,6 +209,10 @@ func getIndexColumnLength(col *model.ColumnInfo, colLen int) (int, error) {
 // Decimal using a binary format that packs nine decimal (base 10) digits into four bytes.
 func calcBytesLengthForDecimal(m int) int {
 	return (m / 9 * 4) + ((m%9)+1)/2
+}
+
+func calcBytesLengthForBlob(m int) int {
+	return m * 4
 }
 
 func buildIndexInfo(tblInfo *model.TableInfo, indexName model.CIStr, indexPartSpecifications []*ast.IndexPartSpecification, state model.SchemaState) (*model.IndexInfo, error) {

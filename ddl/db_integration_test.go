@@ -517,7 +517,9 @@ func (s *testIntegrationSuite5) TestErrnoErrorCode(c *C) {
 	tk.MustGetErrCode(sql, errno.ErrMultiplePriKey)
 	sql = "create table test_error_code_3(pt blob ,primary key (pt));"
 	tk.MustGetErrCode(sql, errno.ErrBlobKeyWithoutLength)
-	sql = "create table test_error_code_3(a text, unique (a(3073)));"
+	sql = "create table test_error_code_3(a text, unique (a(769)));"
+	tk.MustGetErrCode(sql, errno.ErrTooLongKey)
+	sql = "create table test_error_code_3(a text, b text, unique (a(700), b(69)));"
 	tk.MustGetErrCode(sql, errno.ErrTooLongKey)
 	sql = "create table test_error_code_3(`id` int, key `primary`(`id`));"
 	tk.MustGetErrCode(sql, errno.ErrWrongNameForIndex)
